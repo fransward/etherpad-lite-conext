@@ -1,0 +1,24 @@
+Start Etherpad als Service tijdens boot [UBUNTU]
+--------------------------------------------------------
+2011/10/24; mdobrinic
+
+Om Etherpad automatisch op te starten, is er een Upstart script gemaakt in /etc/init, met naam 'etherpadlite.conf' en de volgende inhoud:
+# cat /etc/init/etherpadlite.conf 
+
+#
+# Start Etherpad as Service on Ubuntu
+#
+
+description "Etherpad Lite collaborative document editting"
+
+# Start when system starts
+start on runlevel [3]
+stop on shutdown
+
+exec /usr/local/etherpad-lite/bin/run.sh
+
+
+Maintenance commando's:
+$ sudo start etherpadlite
+
+$ sudo status etherpadlite

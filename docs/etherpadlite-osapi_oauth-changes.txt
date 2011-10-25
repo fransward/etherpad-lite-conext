@@ -1,0 +1,54 @@
+OAuth/osapi changes
+--------------------------------
+2011/10/24; mdobrinic
+
+Aanpassingen aan gedownloade PHP OpenSocial-client:
+1. Oauth3Legged-10a
+RegEx gefixed waarin token en secret worden vastgesteld aan de hand van ReqAccToken-response
+
+2. Oauth-library niet meer includen in osapi
+Aangepast in osapi/osapi.php
+Dit wordt al door SimpleSAMLphp gedaan....
+
+
+Probleem: “Cannot redeclare class OauthException”
+Oorzaak: zowel OpenSocial-PHP (osapi) als SimpleSAMLphp bundelen een eigen versie van de OAuth.php-library. Daarbovenop is er ook een PECL OAuth-extensie bij PHP5 geinstalleerd. In totaal dus 3 onafhankelijke versies van OAuth. Dat gaat fout.
+Allereerst moet de PECL-extensie verwijderd worden.
+Daarnaast geldt dat zowel OpenSocial als SimpleSAMLphp een aantal wijzigingen hebben doorgevoerd aan de OAuth library. Hierdoor is het onmogelijk om een generieke OAuth-library te kunnen voeren.
+Oplossing hiervoor, is om een van de OAuth-libraries als uitgangspunt te nemen, en de code van de andere library hier op aan te passen.
+
+Oplossing deel 1: OAuth PECL extensie verwijderen
+php5_oauth was geinstalleerd als PECL extensie van PHP5.
+Op mac:
+$ sudo port uninstall php5-oauth
+
+Oplossing deel 2: OAuth library standaardiseren op SimpleSAMLphp
+De aanpassingen in SSP-OAuth heb ik zelf een tijd geleden gemaakt, en dus zijn deze bekend. Er zijn een aantal problemen die optreden als gevolg van het gebruiken van de SimpleSAMLphp OAuth library door OpenSocial. Dit lijkt te herleiden tot de volgende aanpassing:
+1. $version in plaats van $default_version protected attribuut van een OAuthRequest class in $osapi/auth/osapiOAuth2Legged.php
+De OAuthRequest::$version variabele wordt rechtstreeks benaderd door OpenSocial. Dit wordt aangepast zodat $default_version wordt gebruikt.
+
+Probleem: 2-legged-OAuth met OAuth.php-library
+De OAuth PHP library voert uit, als onderdeel van request validation, een signature verification waarbij eerst de accesstoken wordt opgehaald.
+Deze is bij 2LOauth niet beschikbaar.
+Om exceptions als gevolg hiervan te negeren, is de volgende functie gewijzigd in Oauth.php van SimpleSAMLphp:
+Origineel, regel 555:
+  public function verify_request(&$request) {/*{{{*/
+    $this->get_version($request);
+    $consumer = $this->get_consumer($request);
+    $token = $this->get_token($request, $consumer, "access");
+    $this->check_signature($request, $consumer, $token);
+    return array($consumer, $token);
+  }/*}}}*/
+
+Nu, regel 555:
+  public function verify_request(&$request) {/*{{{*/
+    $this->get_version($request);
+    $consumer = $this->get_consumer($request);
+    try {
+    	$token = $this->get_token($request, $consumer, "access");
+    } catch (Exception $e) {};
+    $this->check_signature($request, $consumer, $token);
+    return array($consumer, $token);
+  }/*}}}*/
+
+
