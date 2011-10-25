@@ -1,0 +1,123 @@
+@CHARSET "UTF-8";
+
+/* main style */
+body {
+	font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif; font-size: 1.1em;
+}
+
+#site-wrapper {
+	margin: 0px auto; width: 960px; text-align: left; 
+}
+
+/* Header */
+#header {padding-top: 0px;}
+
+/* Logo */
+#logo {
+		border-right: 1px solid #f4f4f4;
+		border-bottom: 1px solid #DDD;
+		padding: 8px 0px 4px 0px;
+		}
+
+
+/* Top */
+#top {padding-bottom: 4px;}
+
+
+
+.main {
+    margin: 4px 0;	
+}
+
+#main-two-columns {
+	background: url('img/main-two-columns.gif') repeat-y right top;
+}
+
+.left {
+	float: left; padding-right: 10px;
+}
+
+.main#main-two-columns #main-content {
+	width: 650px;
+}
+
+
+.right,.alignright {float: right; }
+
+.right-sidebar {
+	
+}
+
+#sidebar {
+    width: 270px;
+}
+
+#sidebar .section-title {
+	margin-bottom: 8px;
+}
+
+
+/* Lists */
+
+li ul, li ol {margin-left: 1.5em;}
+ul, ol {margin: 0 0 1.5em 1.5em;}
+
+ul {list-style-type: circle;}
+ol {
+	list-style-type: decimal;
+	margin-left: 1.9em;
+}
+
+dl {margin: 0 0 1.5em 0;}
+dl dt {font-weight: bold;}
+dd {margin-left: 1.5em;}
+
+
+/* Special lists */
+
+ul.plain-list li, ul.nice-list li, ul.tabbed li {
+	list-style: none;
+	margin-top: 0;
+}
+
+ul.tabbed {
+	display: inline;
+	margin: 0;
+}
+ul.tabbed li {float: left;}
+
+ul.plain-list {margin: 0;}
+
+ul.nice-list {margin-left: 0;}
+ul.nice-list li {
+	border-top: 1px solid #EEE;
+	list-style: none;
+	padding: 4px 0;
+}
+ul.nice-list li:first-child {border-top: none;}
+ul.nice-list li .right {color: #999;}
+
+
+// a.cPadLink { font-size: 0.8em; }
+ul.ulPadList { font-size: 0.8em; }
+
+
+
+/* header positions */
+.header {
+	position: absolute;
+	
+}
+
+
+
+/* etherpad stype elements */
+.epframeclass {
+	display:block;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+}
+	
+

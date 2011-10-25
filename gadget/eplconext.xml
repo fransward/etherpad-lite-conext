@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<Module>
+  <ModulePrefs title="EtherpadLite-SURFconext" scrolling="true" height="640">
+    <Require feature="opensocial-0.8" />
+    <Require feature="locked-domain"/>
+    <Require feature="opensocial-data" />
+    <Require feature="dynamic-height"/>
+    <Require feature="osapi" />
+    <OAuth>
+      <Service name="EPLconext">
+        <Access url="https://etherpad.conext.surfnetlabs.nl/simplesaml/module.php/oauth/accessToken.php" method="GET" /> 
+        <Request url="https://etherpad.conext.surfnetlabs.nl/simplesaml/module.php/oauth/requestToken.php" method="GET" /> 
+        <Authorization url="https://etherpad.conext.surfnetlabs.nl/simplesaml/module.php/oauth/authorize.php" /> 
+      </Service>
+    </OAuth>
+  </ModulePrefs>
+  <UserPref name="groupContext"/>
+  <Content type="html" view="default">
+  <![CDATA[ 
+	<script src="https://etherpad.conext.surfnetlabs.nl/eplconext/gadget/popup.js"></script>
+	<link rel="stylesheet" type="text/css" href="https://etherpad.conext.surfnetlabs.nl/eplconext/css/eplgadget.css" />
+  
+  	<div id="main" style="display: none"></div>
+  	<div id="approval" style="display: none"><a href="#" id="personalize">Personalize the gadget.</a></div>
+  	<div id="waiting" style="display: none">Please click <a href="#" id="approvaldone">I've approved access</a>
+    once you've approved access to your data.</div>
+    
+    <script type="text/javascript">
+
+	var groupname;
+
+    // Helper for UI, facilitating OAuth setup 
+    function showOneSection(toshow) {
+      var sections = [ 'main', 'approval', 'waiting' ];
+      for (var i=0; i < sections.length; ++i) {
+        var s = sections[i];
+        var el = document.getElementById(s);
+        if (s === toshow) {
+          el.style.display = "block";
+        } else {
+          el.style.display = "none";
+        }
+      }
+    }
+
+
+	// append key=urlencodedURIComponent(val) to url, and return result
+	function addToUrl(url, key, value) {
+		var s='?'; if (url.indexOf("?") > -1) {
+			s = '&';
+		}
+
+		return [ url, s, key, '=', encodeURIComponent(value) ].join("");
+	}
+
+
+    // helper:
+	function createNewPadNode(pad) {
+	  var s = pad.name; //+ '(' + pad.owner + ')';
+	  var liNode = document.createElement('li');
+	  liNode.appendChild( document.createTextNode(s) );
+	  
+	  return liNode;
+	}
+
+	// process the json datastructure:
+	// {
+	// "result":'OK',
+	// "group":'groupname',
+	// "data":
+	// [
+	// {
+	// 'name' : 'pad-name',
+	// 'url' : 'pad-url',
+	// 'created' : 'pad-created-unix-timestamp',
+	// 'owner' : 'pad-owner',
+	// 'group_id' : 'pad-group-id' }
+	// ]
+	// }
+	// result is either 'OK','NOGROUP','ERROR'
+	function showList(result) {
+      var l = '- unprocessed list -';
+      var headerElement = document.createElement('h3');
+      var nameNode;
+      
+      if (result.data.result=='ERROR') {
+      	nameNode = document.createTextNode('Fout opgetreden.');
+      } else if (result.data.result=='NOGROUP') {
+        nameNode = document.createTextNode('Tab is niet aan team gekoppeld.');
+      } else {
+        // var prefs = new gadgets.Prefs();
+        // var groupname = prefs.getString('groupContext');
+        // var idspec = opensocial.newIdSpec({ "userId" : "VIEWER"});
+        // var req = opensocial.newDataRequest();
+        // req.add(req.newFetchPersonRequest(opensocial.IdSpec.PersonId.VIEWER), "get_viewer");
+        // req.send(function(dataResponse) {
+        // 	var viewer = dataResponse.get('get_viewer').getData();
+        // 	username = viewer.getDisplayName();
+        // });
+      }
+            
+      nameNode = document.createTextNode('Pads voor ' + groupname + ''); 
+      headerElement.appendChild(nameNode);
+      document.getElementById("main").appendChild(headerElement);
+
+      if (! (result.data.data instanceof Array)) {
+		var t = document.createTextNode('Invalid input from service');
+		document.getElementById("main").appendChild(t);
+		
+	  } else {
+	    var pad;
+	    var listNode = document.createElement('ul');
+	    for(var i = 0; i < result.data.data.length; i++) {
+	        pad = result.data.data[i]; 
+            padNode = createNewPadNode(pad);
+      	    listNode.appendChild(padNode);
+	    }
+	    
+      	document.getElementById("main").appendChild(listNode);
+      	
+      	var footer = document.createElement('p');
+      	footer.appendChild( document.createTextNode( 'Maximaliseer gadget om pads te kunnen wijzigen.' ) );
+      	document.getElementById("main").appendChild( footer );
+      }
+	}
+
+
+    function showBigMessage(msg, styleclass) {
+      var el = document.createElement('p');
+      if (styleclass) {
+        el.setAttribute('class', styleclass);
+      }
+      el.appendChild( document.createTextNode( msg ) );
+      document.getElementById('main').appendChild(el);
+    }
+
+
+	// Invoke makeRequest() to fetch data from the service provider endpoint.
+	// Depending on the results of makeRequest, decide which version of the UI
+	// to ask showOneSection() to display. If user has approved access to his
+	// or her data, display data.
+	// If the user hasn't approved access yet, response.oauthApprovalUrl contains a
+	// URL that includes a Google-supplied request token. This is presented in the
+	// gadget as a link that the user clicks to begin the approval process.
+	
+	function fetchData() {
+		var params = {};
+        var prefs = new gadgets.Prefs();
+		groupcontext = prefs.getString('groupContext');
+		
+		if (groupcontext == null || groupcontext === '') {
+		  showBigMessage('You need to assign this tab to a team to make this gadget work.', 'noGroupContextError inline-error-message');
+          showOneSection('main');
+		  return;
+		}
+		
+		var p = {userId:'@owner', groupId: groupcontext};
+		
+		// set global groupname:
+		osapi.groups.get({userId:'@owner', groupId: groupcontext}).execute(function(response) {
+  			result ='';
+  			for (item in response.list) {
+  				if (response.list[item].id.groupId == groupcontext) {
+  				  groupname = response.list[item].title;
+  				}
+  			}
+		});
+
+
+		url = 'https://etherpad.conext.surfnetlabs.nl/eplconext/padmanager.php/grouppadlist/'+escape(groupcontext);
+
+		// append current group identifier to the request
+		url = addToUrl(url, 'nocachething', new Date().getTime());
+
+		params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+
+		// params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.FEED;
+		params[gadgets.io.RequestParameters.AUTHORIZATION] = gadgets.io.AuthorizationType.OAUTH;
+		params[gadgets.io.RequestParameters.OAUTH_SERVICE_NAME] = "EPLconext";
+		params[gadgets.io.RequestParameters.METHOD] = gadgets.io.MethodType.GET;
+
+		gadgets.io.makeRequest(url, function (response) {
+			if (response.oauthApprovalUrl) {
+				alert(response.oauthApprovalUrl);
+
+				// Create the popup handler. The onOpen function is called when the user
+				// opens the popup window. The onClose function is called when the popup
+				// window is closed.
+				var popup = shindig.oauth.popup({
+					destination: response.oauthApprovalUrl,
+					windowOptions: null,
+					onOpen: function() { showOneSection('waiting'); },
+					onClose: function() { fetchData(); }
+				});
+				// Use the popup handler to attach onclick handlers to UI elements. The
+				// createOpenerOnClick() function returns an onclick handler to open the
+				// popup window. The createApprovedOnClick function returns an onclick
+				// handler that will close the popup window and attempt to fetch the user's
+				// data again.
+			
+				var personalize = document.getElementById('personalize');
+				personalize.onclick = popup.createOpenerOnClick();
+				var approvaldone = document.getElementById('approvaldone');
+				approvaldone.onclick = popup.createApprovedOnClick();
+				showOneSection('approval');
+			} else if (response.data) {
+				showOneSection('main');
+				showList(response);
+				gadgets.window.adjustHeight();
+				
+			} else {
+				alert('text/data:' + response.text + '---/---' + response.data);
+				// The response.oauthError and response.oauthErrorText values may help debug
+				// problems with your gadget.
+				var main = document.getElementById('main');
+				var err = document.createTextNode('OAuth error: ' +
+				response.oauthError + ': ' + response.oauthErrorText);
+				main.appendChild(err);
+				showOneSection('main');
+			}
+		}, params);
+	}
+	// Call fetchData() when gadget loads.
+	gadgets.util.registerOnLoadHandler(fetchData);
+    
+    
+    
+  ]]> 
+  </Content>
+  <!-- ================================================================================================ -->
+  <!-- would want: ${UserPrefs.groupContext} -->
+  <Content view="canvas"
+  		href="https://etherpad.conext.surfnetlabs.nl/eplconext/maingadget.php"
+  		authz="signed"
+  		xmlns:os="http://ns.opensocial.org/2008/markup"
+  		preferred_height="640"
+  		>
+  	<os:ViewerRequest key="viewer" fields="@all" />
+  </Content>
+</Module>

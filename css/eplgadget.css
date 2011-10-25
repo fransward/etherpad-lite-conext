@@ -1,0 +1,15 @@
+@CHARSET "UTF-8";
+
+h3 {
+	font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif; font-size: 1.1em;
+}
+
+ul {
+	font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif; font-size: 0.8em;
+}
+
+.inline-error-message {
+margin: 0;
+padding: 10px;
+background: #C5EFFE;
+}
