@@ -38,8 +38,8 @@ class osapiRpcIO extends osapiIO {
     $url = $provider->rpcEndpoint;
     $params = array();
     $headers = array("Content-Type: application/json");
-print("before:preRequestProcess<br/>\n");
-    if (method_exists($provider, 'preRequestProcess')) { print("preRequestProcess<br/>\n");
+
+    if (method_exists($provider, 'preRequestProcess')) {
       $provider->preRequestProcess($requests, $method, $url, $headers, $signer);
     }
 
