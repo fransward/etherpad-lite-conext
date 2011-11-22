@@ -145,12 +145,20 @@ $o = new Group($gname); $o->_aAttributes['description'] = 'Static Group Desc';
 $aGroupInstances = array(); // array($o);
 
 if ($result != null) {
-	foreach ($result['getGroups']->list as $osapiGroup) {
-		$o = Group::fromOsapi($osapiGroup);
+  if (is_object($result['getGroups'])) {
+	  foreach ($result['getGroups']->list as $osapiGroup) {
+		  $o = Group::fromOsapi($osapiGroup);
 		
-		$aGroupInstances[] = $o;
-		$aGroups[] = $o->getIdentifier();
-	}
+      $aGroupInstances[] = $o;
+      $aGroups[] = $o->getIdentifier();
+    }
+  } elseif (is_array($result['getGroups'])) {
+    foreach ($result['getGroups']['result']['list'] as $osapiGroup) {
+      $o = Group::fromOsapi($osapiGroup);
+      $aGroupInstances[] = $o;
+      $aGroups[] = $o->getIdentifier();
+    }
+  }
 }
 
 
@@ -242,14 +250,14 @@ $urlGroupSession = Web_CGIUtil::get_self_url('/eplconext/padmanager.php/groupses
     request.onreadystatechange = function() {
         if (request.readyState == 4) {
         	var resp = JSON.parse(request.responseText);
-        	
-			if (resp.result == 'OK') {
-				onsuccessfunction(xtra_argument, resp.data.padId);
-			} else {
-				if (resp.message != null) {
-					alert(resp.message);
-				}
-			}
+
+        	if (resp.result == 'OK') {
+            onsuccessfunction(xtra_argument, resp.data.padId);
+          } else {
+        	  if (resp.message != null) {
+					    alert(resp.message);
+				    }
+			    }
         }
     };
   }
@@ -263,13 +271,13 @@ $urlGroupSession = Web_CGIUtil::get_self_url('/eplconext/padmanager.php/groupses
         if (request.readyState == 4) {
         	var resp = JSON.parse(request.responseText);
         	
-			if (resp.result == 'OK') {
-				onsuccessfunction(xtra_argument, resp.data.padId);
-			} else {
-				if (resp.message != null) {
-					alert(resp.message);
-				}
-			}
+          if (resp.result == 'OK') {
+            onsuccessfunction(xtra_argument, resp.data.padId);
+          } else {
+            if (resp.message != null) {
+              alert(resp.message);
+            }
+			    }
         }
     };
   }
