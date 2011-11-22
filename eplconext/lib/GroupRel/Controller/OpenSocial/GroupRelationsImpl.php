@@ -42,8 +42,8 @@ class GroupRelationsImpl extends IGroupRelations {
 
 		$this->_strictMode = ($config["strictMode"] == TRUE);
 		
-		$this->_msgSource = $config["msgSource"];
-		
+    $this->_msgSource = (array_key_exists('msgSource',$config)?$config["msgSource"]:null);
+				
 		$provider_config = $config["provider"];
 		$cln = $provider_config["class"];
 		$this->_osapiProvider = new $cln(NULL, $provider_config);
@@ -67,10 +67,9 @@ class GroupRelationsImpl extends IGroupRelations {
   						)
   					);
   					
-		if ($strictMode) {
-			$osapi->setStrictMode($strictMode);
-		}
-  
+	  if ($this->_strictMode) {
+      $osapi->setStrictMode($this->_strictMode);
+    }  
 		// Start a batch so that many requests may be made at once.
 		$batch = $osapi->newBatch();
 
@@ -104,9 +103,9 @@ class GroupRelationsImpl extends IGroupRelations {
 		$user_params = array(
 			'userId' => $userId
 		);
-print_r($user_params);		
+
 		$result = $this->callOpenSocial($user_params, "groups.get", "getGroups");
-print_r($result);		
+		
 		if ($result instanceof osapiError) {
 			// what to do? ignore request? or throw exception
 			throw new Exception("Error when retrieving group information OpenSocial (provider: " . $this->_osapiProvider->providerName . ")");
