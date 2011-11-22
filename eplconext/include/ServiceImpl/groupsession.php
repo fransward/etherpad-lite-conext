@@ -7,14 +7,8 @@ class Service_groupsession extends EPLc_Service_IAbstractService {
 		if ($groupinfo != null) { $m .= ' and group ' . $groupinfo->_groupId; }
 		Logger_Log::debug($m, 'Service_groupsession');
 		
-		/* add means
-		 * argument 0 is the new padname
-		 * create it for the group with groupId from $groupinfo->_groupId
-		 * ... and be done!
-		 */
 		$oEPLclient = new EtherpadLiteClient(ETHERPADLITE_APIKEY, ETHERPADLITE_BASEURL);
 		
-		$padname = $serviceargs[0];
 		$ep_group = $oEPLclient->createGroupIfNotExistsFor($groupinfo->_groupId);
 		$ep_author = $oEPLclient->createAuthorIfNotExistsFor($userinfo->_userId, $userinfo->_userCommonName);
 		
