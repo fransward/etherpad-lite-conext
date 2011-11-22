@@ -12,11 +12,15 @@ class EPLc_Service_Registry {
 		/* for now, just perform static comparison */
 		if ($name == 'add' 
 				|| $name == 'remove' 
-				|| $name == 'groupsession') {
+        || $name == 'groupsession'
+        ) {
 //			return EPLc_Service_Def::create($name, true, 'OAuth', true);
 //			return EPLc_Service_Def::create($name, true, 'static', true);
 			return EPLc_Service_Def::create($name, true, 'SimpleSAMLphp', true);
-		} else if ($name == 'grouppadlist') {
+		} else if ($name == 'grouppadlist'
+		    || $name == 'padaccesstoken'
+		    || $name == 'remoteadd'
+		    ) {
 			$o = EPLc_Service_Def::create($name, true, 'OAuth', true,
 					EPLc_Service_Def::$GROUPNAME_FROM_URL, 
 					EPLc_Service_Def::$TRUSTED_GROUP);
