@@ -1,6 +1,8 @@
 
 var cozmanovaHelper = cozmanovaHelper || {};
 
+cozmanovaHelper.isIE = /MSIE (\d+\.\d+);/.test(navigator.userAgent);
+
 /**
  * Append a key=value to querystring of given url
  * @param url url to append argument to
@@ -33,9 +35,12 @@ cozmanovaHelper.makeHttpObject = function() {
 cozmanovaHelper.createElementWithAttributes = function(eltype, attrs) {
   var el = document.createElement(eltype);
   if (attrs) {
-    for (item in attrs) {
-      //TODO: Iterate over attributes and append key=val to element's attributes
-      el.setAttribute(item, attrs[item]);
+    for (i in attrs) {
+      if (i=='class' && cozmanovaHelper.isIE) {
+   		  el.className=attrs[i]
+      } else {
+    	  el.setAttribute(i, attrs[i]); 
+      }
     }
   }
       
