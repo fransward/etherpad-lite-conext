@@ -15,6 +15,19 @@
 		allow from all
 	</Directory>
 
+	# Expand t-eplconext-xyz.xml to gadget.xml.php?r=t-eplconext-xyz.xml 
+  <Directory /var/www/etherpad.conext.surfnetlabs.nl/eplconext/gadget>
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride None
+    Order allow,deny
+    allow from all
+
+    RewriteEngine on
+    RewriteBase /eplconext/gadget
+    # Rewrite for gadget.xml requests
+    RewriteRule ^(t-eplconext.*\.xml)$ gadget.xml.php?r=$1 [NC]
+  </Directory>
+
 	ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
 	<Directory "/usr/lib/cgi-bin">
 		AllowOverride None
