@@ -1,0 +1,69 @@
+EtherpadLite Gadget
+==============================
+
+The Etherpad Lite gadget uses the REST interface of the eplconext-application 
+as it's backend. To transfer credentials, the gadget creates signed 
+OAuth-requests for the eplconext-application, based on 3-legged OAuth.
+
+
+* Canvas-view
+
+In Gadget-home-view, the user can either select a pad, or add a new pad.
+When a pad is selected, the pad is set into the 'padparam' UserPref, and
+the view is changed into Canvas (large). This view initializes from
+the 'padparam' UserPref, which means:
+  1- Request a session for the pad, for the group and the user; this
+       results in a one-time-token, that has the (signed) credentials
+       attached to it
+  2- Embed a stripped-view of the eplconext-application in an iframe;
+       this view shows the pad title and the etherpad editor; the
+       one-time-token is used to link this request to the previous request
+       and let user credentials be resolved
+
+
+* Gadget-mode
+
+The gadget can act in different modes, differentiating between the way
+how the groups of the gadget is resolved: 
+  1- SURFconext mode, in which the group is read from the implicit
+       'groupContext' UserPref
+  2- OpenSocial mode, in which the group is set in an explicit UserPref
+       that the user must select from the list of available groups of
+       the gadget container
+  3- OpenSocial/Remote Group Provider mode, in which the group is set
+       in an explicit UserPref that the user must select from the list
+       of available groups of a *remote* OpenSocial container
+       (this would be SURFconext)
+     Note: this mode is NOT yet supported by SURFconext
+
+
+* Implementation and deployment notes
+
+The different behaviour of the gadget in its two different modes are
+realized in a server side script that renders the appropriate XML for
+each different context. The script requires an argument in the query-
+string to decide how to render itself. This should be resolved in
+an URL-rewriting configuration. 
+Using Apache as webservr, this must be defined like this:
+
+  - in sites-available/etherpad.host.name.com:
+  
+    <Directory /var/www/etherpad.conext.surfnetlabs.nl/eplconext/gadget>
+      ...
+      RewriteEngine on
+      RewriteBase /eplconext/gadget
+      # Rewrite for gadget.xml requests
+      RewriteRule ^(t-eplconext.*\.xml)$ gadget.xml.php?r=$1 [NC]
+      ...
+    </Directory>
+    
+  - or the Rewrite configuration can be done in a .htaccess file as
+    well 
+  
+This configuration leads to the following allowed gadget.xml filenames:
+  1- /eplconext/t-eplconext.xml : SURFconext native mode
+  2- /eplconext/t-eplconext-os.xml : OpenSocial mode
+  3- /eplconext/t-eplconext-os-conext.xml.xml : OpenSocial mode with remote
+        container as group provider (does not work yet)
+  
+  
