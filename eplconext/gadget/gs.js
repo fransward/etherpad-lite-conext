@@ -41,7 +41,17 @@ groupSelector.createGroupOption = function(groupid, grouptitle) {
 	'style' : ';',
 	});
   grpel.onclick = f;
-  grpel.appendChild( document.createTextNode(grouptitle) );
+  
+  var grpa = cozmanovaHelper.createElementWithAttributes('a', { 
+	  'href' : '#'} );
+  
+  grpa.appendChild( document.createTextNode(grouptitle) );
+  grpel.appendChild(grpa);
+  
+  grpel.appendChild( cozmanovaHelper.createElementWithAttributes('img', {
+      'src':'https://etherpad.conext.surfnetlabs.nl/eplconext/images/arrownext01.png',
+      'height':'12px'}) );
+
   
   return grpel;
 };
@@ -92,25 +102,35 @@ groupSelector.showGroups=function(response, container) {
 	});
 	t.appendChild( groupSelector.renderHeading('For which team do you want to start or edit an Etherpad document?'));
 
-	var ulc=cozmanovaHelper.createElementWithAttributes('ul', {
-	  'class' : 'gsUlContainer'
-	});
-	  
-    result ='';
-    for (var i=0; i < response.totalResults; i++) {
-      var o = response.list[i];
-      var groupid = o.id.groupId;
-      var grouptitle = o.title;
-      var elgroup = groupSelector.createGroupOption(groupid, grouptitle);
-      ulc.appendChild(elgroup);
+    if (response.totalResults == 0) {
+    	
+    	var elnogroups = cozmanovaHelper.createElement('div', {'class' : 'gsDiContent'});
+    	elnogroups.appendChild( document.createTextNode('You have no team memberships, so team support does not work.'));
+    	
+    	t.appendChild(elnogroups);
+    	
+    } else {
+      var ulc=cozmanovaHelper.createElementWithAttributes('ul', {
+        'class' : 'gsUlContainer'
+      });
+		  
+	  result ='';
+	
+	  for (var i=0; i < response.totalResults; i++) {
+	    var o = response.list[i];
+	    var groupid = o.id.groupId;
+	    var grouptitle = o.title;
+	    var elgroup = groupSelector.createGroupOption(groupid, grouptitle);
+	    ulc.appendChild(elgroup);
+	  }
+	      
+	  t.appendChild(ulc);
     }
-    
-    t.appendChild(ulc);
     
     if (this.container) {
     	this.container.appendChild(t);
     } else {
-    	document.appendChild(t);
+    	document.body.appendChild(t);
     }
     
     gadgets.window.adjustHeight();
