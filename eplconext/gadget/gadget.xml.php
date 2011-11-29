@@ -63,7 +63,12 @@ print '<?xml version="1.0" encoding="UTF-8" ?>';
   <link rel="stylesheet" type="text/css" href="https://etherpad.conext.surfnetlabs.nl/eplconext/css/eplgadget.css" />
   
     <div id="main" style="display: none"></div>
-    <div id="approval" style="display: none"><a href="#" id="personalize">Personalize the gadget.</a></div>
+    <div id="approval" style="display: none">
+      <p>Give this gadget permission to use your personal and team information 
+      with Etherpad. Without this permission it is not possible to start and
+      share pads. Your permission will be remembered for this gadget.</p>
+      <a href="#" id="personalize">Personalize the gadget.</a>
+    </div>
     <div id="waiting" style="display: none">Please click <a href="#" id="approvaldone">I've approved access</a>
     once you've approved access to your data.</div>
     
@@ -116,15 +121,20 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
     
   
   // display [all teams]/[currentGroup]
-  function showHeader() {
+  function showHeader(allowTeamChange) {
     var dh = cozmanovaHelper.createElementWithAttributes('div', {});
-    var allteams = cozmanovaHelper.createElementWithAttributes('a', { 'href':'#' });
-    allteams.appendChild( document.createTextNode('All teams') );
-    allteams.onclick=function(){ groupSelector.clearGroup(); };
+    if (allowTeamChange) {
+      var allteams = cozmanovaHelper.createElementWithAttributes('a', { 'href':'#' });
+      allteams.appendChild( document.createTextNode('All teams') );
+      allteams.onclick=function(){ groupSelector.clearGroup(); };
     
-    dh.appendChild(allteams);
+      dh.appendChild(allteams);
+    }
+    
     dh.appendChild(document.createTextNode(' > '));
     dh.appendChild(document.createTextNode(groupname));
+    
+    
     
     document.getElementById("main").appendChild(dh);
   } //showHeader
@@ -161,7 +171,7 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
       theid = decodeURI(theid);
 
       // container of group pads:
-      var linkul = this.parentNode.parentNode; // .parentNode.parentNode;
+      var linkul = this.parentNode.parentNode;
        
       var padname = prompt("Name for new pad in the group "+theid);
       if (padname == null) {
@@ -186,6 +196,12 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
              // unbind click handlers before re-setting for new element
              $(".padhandled").unbind("click");
              
+             // disable no-pads-available:
+             var elnodocs=document.getElementById('elnodocs');
+             if (elnodocs) {
+               elnodocs.style.display = "none";
+             }
+             
              jQInit();
              gadgets.window.adjustHeight();
            }, linkul); // callAddPad
@@ -204,9 +220,12 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
     var liNode = document.createElement('li');
     liNode.appendChild( cozmanovaHelper.createElementWithAttributes('img', {
       'src':'https://etherpad.conext.surfnetlabs.nl/eplconext/images/arrownext01.png',
-      'height':'12px'}) );
+      'height':'12px', 'style': 'margin-right:5px;'}) );
     
-    liNode.appendChild( document.createTextNode(s) );
+    var a = cozmanovaHelper.createElementWithAttributes('a', { 'href' : '#', 'class' : 'padnode' } );
+    a.appendChild(document.createTextNode(s));
+    
+    liNode.appendChild(a);
     liNode.onclick = function() {
       // always: grouppad, so construct FQ padname:
       makeBig(pad.group_id+'$'+pad.name);
@@ -236,9 +255,9 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
       var nameNode;
       
       if (result.data.result=='ERROR') {
-        nameNode = document.createTextNode('Fout opgetreden.');
+        nameNode = document.createTextNode('Error occurred.');
       } else if (result.data.result=='NOGROUP') {
-        nameNode = document.createTextNode('Tab is niet aan team gekoppeld.');
+        nameNode = document.createTextNode('Tab is not assigned to a team.');
       } else {
         nameNode = document.createTextNode('Select an existing pad to edit this'+
           ' document in a maximized gadget window'); 
@@ -252,16 +271,24 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
         document.getElementById("main").appendChild(t);
       } else {
         var pad;
-        var listNode = document.createElement('ul');
+        var listNode = cozmanovaHelper.createElementWithAttributes('ul', {
+          'style' : 'list-style: none;',
+        });
         
-        cozmanovaHelper.dump(result.data);
-        
-        for(var i = 0; i < result.data.data.length; i++) {
-          pad = result.data.data[i]; 
-          padNode = createNewPadNode(pad);
-          listNode.appendChild(padNode);
+        if (result.data.data.length > 0) {
+          for(var i = 0; i < result.data.data.length; i++) {
+            pad = result.data.data[i]; 
+            padNode = createNewPadNode(pad);
+            listNode.appendChild(padNode);
+          }
+        } else {
+          var elnodocs = cozmanovaHelper.createElementWithAttributes('i', {
+            'id' : 'elnodocs', 'style' : 'display: block'});
+          elnodocs.appendChild(document.createTextNode(
+              'No Etherpad documents are available.' 
+            ));
+          document.getElementById("main").appendChild(elnodocs);
         }
-        
         // append "Add Pad"-link to list:
         // <li><hr/><a class="cPadLinkAdd padhandled" id="apg{$groupid}" href="#" alt="Add new pad"><img src="images/greenplus.png" height="12px" />&nbsp;New pad</a></li>
         var addPadLink=cozmanovaHelper.createElementWithAttributes('a', {
@@ -271,6 +298,10 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
                 'alt':'Add new pad'});
         addPadLink.appendChild( document.createTextNode('Add new pad') );
         var addPadLinkItem=cozmanovaHelper.createElementWithAttributes('li', {});
+        addPadLinkItem.appendChild( cozmanovaHelper.createElementWithAttributes('img', {
+          'src':'https://etherpad.conext.surfnetlabs.nl/eplconext/images/greenplus.png',
+          'height':'12px', 'style': 'margin-right:5px;'}) );
+        
         addPadLinkItem.appendChild(addPadLink);
         listNode.appendChild(addPadLinkItem);
         // continue ...
@@ -383,9 +414,8 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
         showOneSection('approval');
       } else if (response.data) {
         showOneSection('main');
-        if (gadgCtx.is_conext_gadget) {} else {
-          showHeader();
-        }
+        // when conext-gadget: no team change allowed:
+        showHeader(! gadgCtx.is_conext_gadget); 
         showList(response);
         jQInit(); // install click handlers
         
@@ -423,7 +453,6 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
       }
       gadgets.window.adjustHeight();
     });
-    // makeBig('the-padname');
   }
   
  function boo() {
