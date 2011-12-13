@@ -74,3 +74,23 @@ cozmanovaHelper.dump = function (arr,level) {
 	}
 	return dumped_text;
 };
+
+
+
+/** counter and trigger features for sync'ing code **/
+cozmanovaHelper.globcounters = {};
+
+cozmanovaHelper.regcounter = function(name, count, handler) {
+    cozmanovaHelper.globcounters[name]={'count': count, 'handler': handler};
+}
+    
+cozmanovaHelper.countdown = function(name) {
+    var o=cozmanovaHelper.globcounters[name];
+    if (o) {
+        var i=o['count']; i--; o['count'] = i;
+        var h=o['handler'];
+        if (i == 0 && h) {
+            h();
+        }
+    }
+}
