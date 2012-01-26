@@ -56,7 +56,7 @@ print '<?xml version="1.0" encoding="UTF-8" ?>';
   <UserPref name="padparam" datatype="hidden" />
   <Content type="html" view="default">
   <![CDATA[ 
-  <script src="https://portal.dev.surfconext.nl/coin/js/jquery-1.4.2.min.js"></script>
+  <script src="https://portal.surfconext.nl/coin/js/jquery-1.4.2.min.js"></script>
   <script src="https://etherpad.conext.surfnetlabs.nl/eplconext/gadget/popup.js"></script>
   <script src="https://etherpad.conext.surfnetlabs.nl/eplconext/gadget/h.js"></script>
   <script src="https://etherpad.conext.surfnetlabs.nl/eplconext/gadget/gs.js"></script>
@@ -384,8 +384,6 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
     url = cozmanovaHelper.addToUrl(url, 'nocachething', new Date().getTime());
 
     params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
-
-    // params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.FEED;
     params[gadgets.io.RequestParameters.AUTHORIZATION] = gadgets.io.AuthorizationType.OAUTH;
     params[gadgets.io.RequestParameters.OAUTH_SERVICE_NAME] = "EPLconext";
     params[gadgets.io.RequestParameters.METHOD] = gadgets.io.MethodType.GET;
@@ -435,9 +433,11 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
   }
 
   function makeBig(padname) {    
-    var canvas = new gadgets.views.View("canvas");
+	var canvas = new gadgets.views.View("canvas");
     var prefs = new gadgets.Prefs();
     prefs.set("padparam", padname);
+    
+    console.log('Maximizing for pad '+padname);
     
     gadgets.views.requestNavigateTo(canvas);
   }
@@ -455,29 +455,13 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
     });
   }
   
- function boo() {
-   alert('boo');
- }
-  
-  // Call fetchData() when gadget loads.
+  // Call gadgetLoaded() when gadget loads.
   gadgets.util.registerOnLoadHandler(gadgetLoaded);
-  // gadgets.util.registerOnLoadHandler(boo);
-    
-    
     
   ]]>
   </Content>
   <!-- ================================================================================================ -->
-  <!-- would want: ${UserPrefs.groupContext} --><!--
-  <Content view="canvas"
-      type="url"
-      href="https://etherpad.conext.surfnetlabs.nl/eplconext/maingadget.php"
-      authz="signed"
-      xmlns:os="http://ns.opensocial.org/2008/markup"
-      preferred_height="640"
-      >
-    <os:ViewerRequest key="viewer" fields="@all" />
-  </Content>-->
+  <!-- would want: ${UserPrefs.groupContext} -->
   <Content type="html" view="canvas">
   <![CDATA[ 
   <div id="dEtherpadLite"></div>
@@ -490,7 +474,7 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
 <?php 
 print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',');
 ?>      
-    }
+    };
     
   
   
@@ -533,19 +517,30 @@ print('      is_conext_gadget : '. ($mode=='conext-native'?'true':'false') .',')
     
   }
 
-  var prefs = new gadgets.Prefs();
-  var groupcontext = prefs.getString('groupContext');
-  var padname = prefs.getString("padparam");
-  var currentGroup = prefs.getString('currentGroup');  
+  var prefs;
+  var groupcontext;
+  var padname;
+  var currentGroup;  
 
-  if (gadgCtx.is_conext_gadget) {
-    groupcontext = groupcontext;
-  } else {
-    groupcontext = currentGroup;
-  }
+  function gadgetLoaded() {
+	console.log('Canvas view executes gadgetLoaded()');
+	prefs = new gadgets.Prefs();
+	groupcontext = prefs.getString('groupContext');
+	padname = prefs.getString("padparam");
+	currentGroup = prefs.getString('currentGroup');  
+	  
+    if (gadgCtx.is_conext_gadget) {
+	  groupcontext = groupcontext;
+	} else {
+	  groupcontext = currentGroup;
+	}
     
-  authorizeCanvasPad(padname);
-     
+    authorizeCanvasPad(padname);
+  }
+  
+  console.log('Canvas view executes global script.');
+  gadgets.util.registerOnLoadHandler(gadgetLoaded);
+
     
   </script>
   
