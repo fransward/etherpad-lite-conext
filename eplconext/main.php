@@ -130,9 +130,27 @@ if ($proxied_content !== FALSE) {
 	if ($strictMode) { $osapi->setStrictMode($strictMode); }
 	
 	$service = $osapi->groups;
+	$resultkey = 'getGroups';
 	$batch = $osapi->newBatch();
-	$batch->add($service->get($user_params), 'getGroups');
+	$batch->add($service->get($user_params), $resultkey);
 	$result = $batch->execute();
+	
+	// deal with unauthorized requests:
+	if ($result[$resultkey] instanceof osapiError) {
+		$err = $result[$resultkey];
+		if ($err->getErrorCode() == 401) {
+			// Token did not authorize the request; dispose of it, and
+			// get a new one:
+			if (($token = $storage->get($auth->storageKey)) !== false) {
+				$storage->delete($auth->storageKey);
+				// restart token setup procedure:
+				osapiOAuth3Legged_10a::performOAuthLogin(OAUTH_CONFIG_consumerKey, OAUTH_CONFIG_consumerSecret, 
+						$storage, $provider, $userId);
+			} else {
+				throw new Exception("Problem occured when performing OpenSocial call: {$osapi_service}");
+			}
+		}
+	}
 	
 } else {
 	$result = null;
